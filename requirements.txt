@@ -1,0 +1,22 @@
+# Core LLM / agent framework
+groq>=0.9.0
+langchain>=0.2.14
+langchain-core>=0.2.35
+langchain-groq>=0.1.9
+langchain-community>=0.2.12
+
+# Tool 1: Tavily search
+tavily-python>=0.4.0
+langchain-tavily>=0.1.0
+
+# Tool 2: BeautifulSoup web scraping
+beautifulsoup4>=4.12.3
+requests>=2.32.3
+lxml>=5.2.2
+rich 
+# Env / config management
+python-dotenv>=1.0.1
+
+# LangChain Expression Language (LCEL) uses Runnables from langchain-core above;
+# langgraph included for building the ReAct agent graph
+langgraph>=0.2.14
