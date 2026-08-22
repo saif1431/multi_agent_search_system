@@ -15,6 +15,8 @@ A multi-agent research assistant built with LangChain/LangGraph, Groq (LLM), Tav
 - [main.py](main.py) — CLI entry point that runs one hardcoded question through the pipeline.
 - [api.py](api.py) — FastAPI app exposing `POST /research` (and `GET /health`), wrapping `pipeline.run`. CORS is enabled for `http://localhost:3000`.
 - [frontend/](frontend/) — Next.js (App Router, TypeScript, Tailwind v4) UI. `src/components/research-console.tsx` is the client component with the question form and rendered answer; styled as a minimalist editorial console (warm monochrome palette, Newsreader serif headings, Geist Sans/Mono) per the project's minimalist-ui design skill. Answers are rendered with `react-markdown` + `remark-gfm` (the API returns markdown, including tables).
+  - **History** — every answered question is saved to `localStorage` (`src/lib/history.ts`, capped at 30 entries) and listed in a sidebar with relative timestamps; selecting one re-displays it with no new API call. Entries can be removed individually or all at once. Desktop-only for now (sidebar is hidden below the `md` breakpoint).
+  - **Export** — an "Export PDF" button renders the currently displayed question + answer to a paginated PDF client-side (`src/lib/export.ts`, via `html2canvas-pro` + `jspdf`) and downloads it directly, no server round-trip or print dialog.
 
 Not yet built: automated tests.
 
