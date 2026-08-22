@@ -4,7 +4,7 @@ A multi-agent research assistant built with LangChain/LangGraph, Groq (LLM), Tav
 
 ## Status
 
-✅ **LCEL pipeline + FastAPI backend working end-to-end** (no frontend UI yet).
+✅ **LCEL pipeline + FastAPI backend + Next.js frontend all wired up end-to-end.**
 
 - [tools.py](tools.py)
   - `web_search(query)` — searches the web via Tavily (top 2 results), returns title/URL/content.
@@ -13,9 +13,10 @@ A multi-agent research assistant built with LangChain/LangGraph, Groq (LLM), Tav
 - [agent.py](agent.py) — a `langchain.agents.create_agent` ReAct agent bound to both tools, exposed as `run_research_agent(question)`.
 - [pipeline.py](pipeline.py) — the LCEL pipeline: `RunnablePassthrough.assign` runs the ReAct agent to gather research notes, then pipes `{question, research}` through a synthesis prompt → `llm` → `StrOutputParser` to produce the final formatted answer with a Sources section.
 - [main.py](main.py) — CLI entry point that runs one hardcoded question through the pipeline.
-- [api.py](api.py) — FastAPI app exposing `POST /research` (and `GET /health`), wrapping `pipeline.run`. CORS is enabled for `http://localhost:3000` for the future Next.js frontend.
+- [api.py](api.py) — FastAPI app exposing `POST /research` (and `GET /health`), wrapping `pipeline.run`. CORS is enabled for `http://localhost:3000`.
+- [frontend/](frontend/) — Next.js (App Router, TypeScript, Tailwind v4) UI. `src/components/research-console.tsx` is the client component with the question form and rendered answer; styled as a minimalist editorial console (warm monochrome palette, Newsreader serif headings, Geist Sans/Mono) per the project's minimalist-ui design skill. Answers are rendered with `react-markdown` + `remark-gfm` (the API returns markdown, including tables).
 
-Not yet built: Next.js frontend, automated tests.
+Not yet built: automated tests.
 
 ## Purpose
 
@@ -84,6 +85,18 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/research" -Method Post -ContentTyp
 
 `POST /research` takes `{"question": "..."}` and returns `{"answer": "..."}`. It returns HTTP 429 if the Groq rate limit is hit.
 
+### Running the frontend
+
+With the API running (see above), in a separate terminal:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000`. The frontend reads the API's base URL from `frontend/.env.local` (`NEXT_PUBLIC_API_BASE_URL`, defaults to `http://127.0.0.1:8000`).
+
 ## Roadmap
 
 - [x] Define Groq-backed LLM agent(s) using `langchain-groq`
@@ -91,5 +104,5 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/research" -Method Post -ContentTyp
 - [x] Compose the pipeline with LCEL Runnables
 - [x] Add a `main.py` entry point to run end-to-end queries
 - [x] FastAPI backend exposing the pipeline as an endpoint
-- [ ] Next.js frontend UI
+- [x] Next.js frontend UI
 - [ ] Add automated tests
