@@ -4,7 +4,7 @@ A multi-agent research assistant built with LangChain/LangGraph, Groq (LLM), Tav
 
 ## Status
 
-✅ **LCEL pipeline working end-to-end** (CLI only so far, no API/UI yet).
+✅ **LCEL pipeline + FastAPI backend working end-to-end** (no frontend UI yet).
 
 - [tools.py](tools.py)
   - `web_search(query)` — searches the web via Tavily (top 2 results), returns title/URL/content.
@@ -13,8 +13,9 @@ A multi-agent research assistant built with LangChain/LangGraph, Groq (LLM), Tav
 - [agent.py](agent.py) — a `langchain.agents.create_agent` ReAct agent bound to both tools, exposed as `run_research_agent(question)`.
 - [pipeline.py](pipeline.py) — the LCEL pipeline: `RunnablePassthrough.assign` runs the ReAct agent to gather research notes, then pipes `{question, research}` through a synthesis prompt → `llm` → `StrOutputParser` to produce the final formatted answer with a Sources section.
 - [main.py](main.py) — CLI entry point that runs one hardcoded question through the pipeline.
+- [api.py](api.py) — FastAPI app exposing `POST /research` (and `GET /health`), wrapping `pipeline.run`. CORS is enabled for `http://localhost:3000` for the future Next.js frontend.
 
-Not yet built: FastAPI backend, Next.js frontend, automated tests.
+Not yet built: Next.js frontend, automated tests.
 
 ## Purpose
 
@@ -65,12 +66,30 @@ python -c "from tools import scrape_url; print(scrape_url.invoke('https://exampl
 
 **Note on answer grounding:** `openai/gpt-oss-20b` is a small model — spot-check the URLs it cites in the Sources section, as it can occasionally add plausible-looking sources beyond what the tools actually returned.
 
+### Running the API
+
+Start the dev server:
+
+```powershell
+python -m uvicorn api:app --reload --host 127.0.0.1 --port 8000
+```
+
+Interactive docs (Swagger UI) are then available at `http://127.0.0.1:8000/docs`.
+
+Test it with curl/PowerShell:
+
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/research" -Method Post -ContentType "application/json" -Body (@{ question = "What is LangGraph used for?" } | ConvertTo-Json)
+```
+
+`POST /research` takes `{"question": "..."}` and returns `{"answer": "..."}`. It returns HTTP 429 if the Groq rate limit is hit.
+
 ## Roadmap
 
 - [x] Define Groq-backed LLM agent(s) using `langchain-groq`
 - [x] Build a ReAct agent wired to `web_search` and `scrape_url`
 - [x] Compose the pipeline with LCEL Runnables
 - [x] Add a `main.py` entry point to run end-to-end queries
-- [ ] FastAPI backend exposing the pipeline as an endpoint
+- [x] FastAPI backend exposing the pipeline as an endpoint
 - [ ] Next.js frontend UI
 - [ ] Add automated tests
