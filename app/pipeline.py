@@ -2,8 +2,8 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 
-from agent import run_research_agent
-from llm import llm
+from app.agent import run_research_agent
+from app.llm import llm
 
 SYNTHESIS_PROMPT = ChatPromptTemplate.from_messages(
     [

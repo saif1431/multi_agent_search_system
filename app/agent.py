@@ -1,7 +1,7 @@
 from langchain.agents import create_agent
 
-from llm import llm
-from tools import web_search, scrape_url
+from app.llm import llm
+from app.tools import web_search, scrape_url
 
 SYSTEM_PROMPT = (
     "You are a research agent. Use the web_search tool to find relevant sources, "

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from groq import RateLimitError
 from pydantic import BaseModel, Field
 
-from pipeline import run
+from app.pipeline import run
 
 app = FastAPI(title="Multi-Agent Research API")
 
