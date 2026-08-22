@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from groq import RateLimitError
@@ -7,9 +9,16 @@ from pipeline import run
 
 app = FastAPI(title="Multi-Agent Research API")
 
+default_origins = ["http://localhost:3000"]
+extra_origins = [
+    origin.strip()
+    for origin in os.getenv("FRONTEND_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=default_origins + extra_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
