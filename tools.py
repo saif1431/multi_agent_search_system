@@ -15,12 +15,12 @@ tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 def web_search(query: str) -> str:
       """Search the web for recent and reliable information on a topic. Return Titles, URLs, and Snippets"""
       
-      result = tavily.search(query=query, max_results=5)
-      
+      result = tavily.search(query=query, max_results=2)
+
       out = []
-      
+
       for r in result["results"]:
-            out.append(f"Title: {r['title']}\nURL: {r['url']}\nContent: {r['content']}\n")
+            out.append(f"Title: {r['title']}\nURL: {r['url']}\nContent: {r['content'][:400]}\n")
             
       return "\n----\n".join(out)
       
@@ -33,7 +33,7 @@ def scrape_url(url: str) -> str:
           soup = BeautifulSoup(res.text, "html.parser")
           for tag in soup(["script", "style", "nav", "footer"]):
                 tag.decompose()
-          return soup.get_text(separator=" ", strip=True)[:3000]
+          return soup.get_text(separator=" ", strip=True)[:800]
       
       except Exception as e:
             return f"Error scraping URL: {e}"

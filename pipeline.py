@@ -1,91 +1,42 @@
-from agent import build_search_agent, build_reader_agent, writer_chain, critic_chain
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 
+from agent import run_research_agent
+from llm import llm
 
-def run_research_pipeline(topic: str) -> dict:
+SYNTHESIS_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            "You are a research editor. You are given raw research notes gathered by a "
+            "research agent (from web search and page scraping) and the original question. "
+            "Write a clear, well-organized final answer to the question, using only the "
+            "information in the notes. End with a 'Sources' section listing the URLs used. "
+            "If the notes are insufficient to answer, say so explicitly.",
+        ),
+        (
+            "human",
+            "Question: {question}\n\nResearch notes:\n{research}",
+        ),
+    ]
+)
 
-    state = {}
-
-    # Step 1: Search for relevant information
-    print("\n" + "=" * 50)
-    print(f"Step 1: Searching for information on '{topic}'...")
-    print("=" * 50 + "\n")
-
-    search_agent = build_search_agent()
-
-    search_result = search_agent.invoke({
-        "messages": [
-            {
-                "role": "user",
-                "content": f"Find recent, reliable and detailed information about: {topic}"
-            }
-        ]
-    })
-
-    state["search_result"] = search_result["messages"][-1].content
-
-    print("\nSearch Results:\n", state["search_result"])
-
-
-    # Step 2: Read the most relevant source
-    print("\n" + "=" * 50)
-    print(f"Step 2: Reading information about '{topic}'...")
-    print("=" * 50 + "\n")
-
-    reader_agent = build_reader_agent()
-
-    reader_result = reader_agent.invoke({
-        "messages": [
-            {
-                "role": "user",
-                "content": (
-                    f"Based on the following search results about '{topic}', "
-                    f"pick the most relevant URL and scrape it for deeper content.\n\n"
-                    f"Search Results:\n{state['search_result'][:800]}"
-                )
-            }
-        ]
-    })
-
-    state["reader_result"] = reader_result["messages"][-1].content
-
-    print("\nReader Result:\n", state["reader_result"])
-    
-#      Generate a detailed research report based on the gathered information
-    
-    print("\n" + "=" * 50)
-    print(f"Step 3: Generating a detailed research report on '{topic}'...")
-    print("=" * 50 + "\n")
-    
-    research_combined = (
-        f"SEARCH RESULTS : \n {state['search_result']} \n\n"
-        f"DETAILED SCRAPED CONTENT : \n {state['reader_result']}"
+# LCEL pipeline (Runnables piped with `|`, no legacy Chain classes):
+#   1. RunnablePassthrough.assign attaches the ReAct agent's research findings
+#      to the input dict under the "research" key, keeping "question" intact.
+#   2. The prompt formats {question} + {research} into messages.
+#   3. The llm generates the final synthesized answer.
+#   4. StrOutputParser extracts plain text from the LLM's message output.
+research_pipeline = (
+    RunnablePassthrough.assign(
+        research=RunnableLambda(lambda x: run_research_agent(x["question"]))
     )
-    
-    state["report"] = writer_chain.invoke({
-          "topic": topic,
-          "research": research_combined
-    })   
-    
-    print("\n Final Report \n", state["report"])
-    
-    
-#     Critically evaluate the report 
-    
-    print("\n" + "=" * 50)
-    print(f"Step 3: Generating a detailed research report on '{topic}'...")
-    print("=" * 50 + "\n")
-    
-    
-    state["feedback"] = critic_chain.invoke({
-          "report": state["report"]
-    })
-    
-    print("\n Critic Report \n", state["feedback"])
-    
-    return state
+    | SYNTHESIS_PROMPT
+    | llm
+    | StrOutputParser()
+)
 
 
-
-if __name__ == "__main__":
-      topic= input("\nEnter a research topic: ")
-      run_research_pipeline(topic)
+def run(question: str) -> str:
+    return research_pipeline.invoke({"question": question})
